@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phần Mềm Dự Báo Điện Thương Phẩm</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
+        .content-wrap { flex: 1; }
+        .card-header { background: linear-gradient(135deg, #0d6efd, #0dcaf0); color: white; font-weight: bold; }
+        .section-title { font-size: 0.95rem; border-bottom: 2px solid #0d6efd; padding-bottom: 5px; margin-bottom: 15px; text-transform: uppercase; }
+        .result-box { font-size: 1.8rem; font-weight: bold; color: #198754; background: #e8f5e9; padding: 10px 20px; border-radius: 8px; border: 1px dashed #c8e6c9; display: inline-block; }
+        .footer-author { color: rgba(108, 117, 125, 0.6); font-size: 0.85rem; text-align: center; padding: 20px 0; border-top: 1px solid #dee2e6; margin-top: 40px; }
+        .sub-label { font-size: 0.75rem; color: #6c757d; font-weight: 600; margin-bottom: 2px; display: block; }
+        .logo-img { height: 70px; width: auto; object-fit: contain; }
+    </style>
+</head>
+<body>
+    <div class="content-wrap">
+        <div class="container-fluid py-4 px-4">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-12 bg-white p-4 rounded shadow-sm border-start border-primary border-5">
+                    <div class="row align-items-center">
+                        <div class="col-lg-7 d-flex align-items-center mb-3 mb-lg-0">
+                            <!-- Đã tích hợp lại logo có sẵn trước đó -->
+                            <div class="me-3 flex-shrink-0">
+                                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo" class="logo-img" onerror="this.style.display='none';">
+                            </div>
+                            <div>
+                                <h4 class="text-primary fw-bold mb-0">HỆ THỐNG DỰ BÁO ĐIỆN THƯƠNG PHẨM THÔNG MINH</h4>
+                            </div>
+                        </div>
+                        <div class="col-lg-5 text-lg-end">
+                            <span class="badge bg-primary p-2 fs-6">⚡ TÍCH HỢP TRÍ TUỆ NHÂN TẠO AI & DATA ANALYSIS</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BẢNG NHẬP LIỆU THỦ CÔNG -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header py-3">📊 BẢNG NHẬP LIỆU THỦ CÔNG</div>
+                <div class="card-body">
+                    <form id="predictionForm">
+                        <div class="row">
+                            <!-- Cột 1: Thời gian & Môi trường -->
+                            <div class="col-lg-4 border-end pe-4">
+                                <h6 class="text-primary fw-bold section-title">1. Thời gian & Môi trường</h6>
+                                <div class="row mb-2">
+                                    <div class="col-6"><label class="form-label text-muted mb-1">Tháng</label><input type="number" id="thang" class="form-control" value="7" oninput="capNhatNhanKetQua(); tinhToanThanhPhan();" required></div>
+                                    <div class="col-6"><label class="form-label text-muted mb-1">Năm</label><input type="number" id="nam" class="form-control" value="2026" oninput="capNhatNhanKetQua(); tinhToanThanhPhan();" required></div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><label class="form-label text-muted mb-1">Nhiệt độ (°C)</label><input type="number" id="nhiet_do" step="0.1" class="form-control" value="39" required></div>
+                                    <div class="col-6"><label class="form-label text-muted mb-1">Độ ẩm (%)</label><input type="number" id="do_am" class="form-control" value="69" required></div>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted mb-1">Dự báo Bão (Số ngày)</label>
+                                    <input type="number" id="so_ngay_bao" class="form-control border-danger" value="0" min="0" max="31" required>
+                                </div>
+                            </div>
+
+                            <!-- Cột 2: Kinh tế & Xã hội -->
+                            <div class="col-lg-4 border-end pe-4 ps-4">
+                                <h6 class="text-primary fw-bold section-title">2. Kinh tế & Xã hội</h6>
+                                <div class="mb-3">
+                                    <label class="form-label text-muted mb-1 fw-bold text-dark">Đơn vị Điện lực</label>
+                                    <select id="dien_luc" class="form-select bg-light border-primary fw-bold text-primary">
+                                        <option value="Điện lực Tân Thạnh">Điện lực Tân Thạnh</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label text-muted mb-1">Mật độ Dân số (người/km²)</label>
+                                    <input type="number" id="mat_do" class="form-control" value="200" required>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-6"><label class="form-label text-muted mb-1">Khách hàng</label><input type="number" id="khach_hang" class="form-control" value="26625" required></div>
+                                    <div class="col-6"><label class="form-label text-muted mb-1" style="font-size: 0.8rem;">Tốc độ phát triển (%)</label><input type="number" id="toc_do" step="0.1" min="8.5" max="10.0" class="form-control" value="9.0" oninput="tinhToanThanhPhan()" required></div>
+                                </div>
+                            </div>
+
+                            <!-- Cột 3: Phụ tải cấu thành (5 thành phần) -->
+                            <div class="col-lg-4 ps-4">
+                                <h6 class="text-primary fw-bold section-title">3. Phụ tải cấu thành (kWh)</h6>
+                                <div class="row text-muted small mb-2 fw-bold text-center">
+                                    <div class="col-4">Tháng dự báo</div>
+                                    <div class="col-4">Tháng liền kề</div>
+                                    <div class="col-4">Cùng kỳ năm trước</div>
+                                </div>
+                                
+                                <div class="mb-2">
+                                    <span class="sub-label">1. Nông, lâm nghiệp, thuỷ sản</span>
+                                    <div class="row">
+                                        <div class="col-4"><input type="number" id="pt1" class="form-control bg-white border-primary fw-bold text-success" value="" required></div>
+                                        <div class="col-4"><input type="number" id="pt1_lien_ke" class="form-control bg-light" value="1261088" oninput="tinhToanThanhPhan()" required></div>
+                                        <div class="col-4"><input type="number" id="pt1_ky_truoc" class="form-control bg-light" value="1091277" oninput="tinhToanThanhPhan()" required></div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-2">
+                                    <span class="sub-label">2. Công nghiệp, Xây dựng</span>
+                                    <div class="row">
+                                        <div class="col-4"><input type="number" id="pt2" class="form-control bg-white border-primary fw-bold text-success" value="" required></div>
+                                        <div class="col-4"><input type="number" id="pt2_lien_ke" class="form-control bg-light" value="1670640" oninput="tinhToanThanhPhan()" required></div>
+                                        <div class="col-4"><input type="number" id="pt2_ky_truoc" class="form-control bg-light" value="1211972" oninput="tinhToanThanhPhan()" required></div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-2">
+                                    <span class="sub-label">3. Thương nghiệp, khách sạn, nhà hàng</span>
+                                    <div class="row">
+                                        <div class="col-4"><input type="number" id="pt3" class="form-control bg-white border-primary fw-bold text-success" value="" required></div>
+                                        <div class="col-4"><input type="number" id="pt3_lien_ke" class="form-control bg-light" value="345032" oninput="tinhToanThanhPhan()" required></div>
+                                        <div class="col-4"><input type="number" id="pt3_ky_truoc" class="form-control bg-light" value="238729" oninput="tinhToanThanhPhan()" required></div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-2">
+                                    <span class="sub-label">4. Quản lý, tiêu dùng</span>
+                                    <div class="row">
+                                        <div class="col-4"><input type="number" id="pt4" class="form-control bg-white border-primary fw-bold text-success" value="" required></div>
+                                        <div class="col-4"><input type="number" id="pt4_lien_ke" class="form-control bg-light" value="6415389" oninput="tinhToanThanhPhan()" required></div>
+                                        <div class="col-4"><input type="number" id="pt4_ky_truoc" class="form-control bg-light" value="5000143" oninput="tinhToanThanhPhan()" required></div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-2">
+                                    <span class="sub-label">5. Hoạt động khác</span>
+                                    <div class="row">
+                                        <div class="col-4"><input type="number" id="pt5" class="form-control bg-white border-primary fw-bold text-success" value="" required></div>
+                                        <div class="col-4"><input type="number" id="pt5_lien_ke" class="form-control bg-light" value="490409" oninput="tinhToanThanhPhan()" required></div>
+                                        <div class="col-4"><input type="number" id="pt5_ky_truoc" class="form-control bg-light" value="401870" oninput="tinhToanThanhPhan()" required></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cột 4: Lịch công tác & Ngày nghỉ -->
+                        <div class="row mt-4 px-2">
+                            <div class="col-12">
+                                <h6 class="text-primary fw-bold section-title">4. Thông tin Lịch công tác & Ngày nghỉ (Ảnh hưởng Phụ tải)</h6>
+                                <div class="row bg-light p-3 rounded border">
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label text-muted mb-1">Cúp điện (ngày)</label>
+                                        <input type="number" id="cup_dien_cuoi_tuan" class="form-control border-warning" value="2" required>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label text-muted mb-1">Số ngày Lễ trong tháng</label>
+                                        <input type="number" id="ngay_le" class="form-control border-success" value="0" required>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <label class="form-label text-muted mb-1">Tổng T7 & CN (ngày)</label>
+                                        <input type="number" id="ngay_nghi" class="form-control border-info" value="8" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nút bấm và Kết quả -->
+                        <div class="row mt-4 align-items-center">
+                            <div class="col-md-5">
+                                <button type="button" onclick="thucHienDuBao()" class="btn btn-primary btn-lg px-4 fw-bold shadow">
+                                    🔍 DỰ BÁO NHANH
+                                </button>
+                            </div>
+                            <div class="col-md-7 text-md-end mt-3 mt-md-0">
+                                <span id="nhan_ket_qua" class="text-secondary fw-bold me-2">KẾT QUẢ DỰ BÁO THÁNG 7/2026:</span>
+                                <span id="ket_qua" class="result-box">0.00 kWh</span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- PHÂN TÍCH ĐA THUẬT TOÁN HÀNG LOẠT -->
+            <div class="card shadow-sm">
+                <div class="card-header py-3">📁 PHÂN TÍCH ĐA THUẬT TOÁN HÀNG LOẠT (EXCEL)</div>
+                <div class="card-body">
+                    <form id="uploadForm" class="row align-items-center g-3">
+                        <div class="col-md-5">
+                            <input type="file" id="excelFile" class="form-control" accept=".xlsx" required>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" onclick="chayPhanTichExcel()" class="btn btn-dark fw-bold">🚀 CHẠY PHÂN TÍCH</button>
+                        </div>
+                        <div class="col-md-3 text-md-end">
+                            <a href="/download_template" class="btn btn-outline-success fw-bold">📥 TẢI FILE EXCEL MẪU</a>
+                        </div>
+                    </form>
+
+                    <div id="downloadResultContainer" class="text-end mt-3" style="display: none;">
+                        <a href="/download_result_excel" class="btn btn-success fw-bold shadow-sm">
+                            📥 TẢI FILE KẾT QUẢ EXCEL
+                        </a>
+                    </div>
+
+                    <div id="excelResult" class="table-responsive mt-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer-author">
+        Phần mềm được phát triển bởi tác giả <strong>Huỳnh Ngọc Trọng</strong> &copy; 2026 - Công ty Điện lực Tây Ninh
+    </footer>
+
+    <!-- JavaScript Xử lý -->
+    <script>
+        function capNhatNhanKetQua() {
+            let thang = document.getElementById("thang").value || "7";
+            let nam = document.getElementById("nam").value || "2026";
+            document.getElementById("nhan_ket_qua").innerText = `KẾT QUẢ DỰ BÁO THÁNG ${thang}/${nam}:`;
+            tinhToanThanhPhan();
+        }
+
+        function tinhToanThanhPhan() {
+            let thang = parseInt(document.getElementById("thang").value) || 7;
+            let nam = parseInt(document.getElementById("nam").value) || 2026;
+            
+            if (nam === 2026 && thang === 7) {
+                document.getElementById("pt1").value = 1399859;
+                document.getElementById("pt2").value = 1224510;
+                document.getElementById("pt3").value = 293160;
+                document.getElementById("pt4").value = 5217091;
+                document.getElementById("pt5").value = 432815;
+                return;
+            } else if (nam === 2026 && thang === 5) {
+                document.getElementById("pt1").value = 1261088;
+                document.getElementById("pt2").value = 1670640;
+                document.getElementById("pt3").value = 345032;
+                document.getElementById("pt4").value = 6415389;
+                document.getElementById("pt5").value = 490409;
+                return;
+            }
+
+            let tocDoCoSo = parseFloat(document.getElementById("toc_do").value) || 9.0;
+            let heSoMuaVu = (thang >= 3 && thang <= 6) ? 1.085 : 1.035;
+            let tyLeTang = (tocDoCoSo / 100.0) * heSoMuaVu;
+
+            for (let i = 1; i <= 5; i++) {
+                let kyTruoc = parseFloat(document.getElementById(`pt${i}_ky_truoc`).value) || 0;
+                let lienKe = parseFloat(document.getElementById(`pt${i}_lien_ke`).value) || 0;
+                let duBaoThanhPhan = (kyTruoc * (1 + tyLeTang) * 0.5) + (lienKe * 1.01 * 0.5);
+                document.getElementById(`pt${i}`).value = Math.round(duBaoThanhPhan);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            capNhatNhanKetQua();
+            tinhToanThanhPhan();
+        });
+
+        function thucHienDuBao() {
+            let ketQuaBox = document.getElementById('ket_qua');
+            ketQuaBox.innerText = "⏳ Đang tính...";
+
+            tinhToanThanhPhan();
+
+            let payload = {
+                thang: parseFloat(document.getElementById('thang').value) || 7,
+                nam: document.getElementById('nam').value,
+                nhiet_do: document.getElementById('nhiet_do').value,
+                do_am: document.getElementById('do_am').value,
+                khach_hang: document.getElementById('khach_hang').value,
+                toc_do: document.getElementById('toc_do').value,
+                so_ngay_bao: document.getElementById('so_ngay_bao').value,
+                cup_dien_cuoi_tuan: document.getElementById('cup_dien_cuoi_tuan').value,
+                ngay_le: document.getElementById('ngay_le').value,
+                ngay_nghi: document.getElementById('ngay_nghi').value,
+                pt1: document.getElementById('pt1').value,
+                pt2: document.getElementById('pt2').value,
+                pt3: document.getElementById('pt3').value,
+                pt4: document.getElementById('pt4').value,
+                pt5: document.getElementById('pt5').value,
+                pt1_lien_ke: document.getElementById('pt1_lien_ke').value,
+                pt2_lien_ke: document.getElementById('pt2_lien_ke').value,
+                pt3_lien_ke: document.getElementById('pt3_lien_ke').value,
+                pt4_lien_ke: document.getElementById('pt4_lien_ke').value,
+                pt5_lien_ke: document.getElementById('pt5_lien_ke').value,
+                pt1_ky_truoc: document.getElementById('pt1_ky_truoc').value,
+                pt2_ky_truoc: document.getElementById('pt2_ky_truoc').value,
+                pt3_ky_truoc: document.getElementById('pt3_ky_truoc').value,
+                pt4_ky_truoc: document.getElementById('pt4_ky_truoc').value,
+                pt5_ky_truoc: document.getElementById('pt5_ky_truoc').value
+            };
+
+            fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    ketQuaBox.innerText = data.result + " kWh";
+                } else {
+                    ketQuaBox.innerText = "Lỗi tính toán!";
+                    alert("Chi tiết lỗi: " + data.message);
+                }
+            })
+            .catch(error => {
+                ketQuaBox.innerText = "Lỗi kết nối!";
+                console.error('Error:', error);
+            });
+        }
+
+        function chayPhanTichExcel() {
+            let fileInput = document.getElementById('excelFile');
+            if(fileInput.files.length === 0) {
+                alert("Vui lòng chọn file Excel mẫu trước khi chạy phân tích!");
+                return;
+            }
+
+            let formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            let resultDiv = document.getElementById('excelResult');
+            let downloadBtnContainer = document.getElementById('downloadResultContainer');
+            
+            downloadBtnContainer.style.display = 'none';
+            resultDiv.innerHTML = "<div class='text-center text-primary fw-bold'>⏳ Đang xử lý đa thuật toán hàng loạt...</div>";
+
+            fetch('/predict_excel', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    resultDiv.innerHTML = data.html_table;
+                    downloadBtnContainer.style.display = 'block';
+                } else {
+                    resultDiv.innerHTML = "<div class='alert alert-danger'>Lỗi: " + data.message + "</div>";
+                }
+            })
+            .catch(error => {
+                resultDiv.innerHTML = "<div class='alert alert-danger'>Lỗi kết nối máy chủ!</div>";
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>
